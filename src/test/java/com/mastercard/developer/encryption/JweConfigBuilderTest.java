@@ -1,11 +1,13 @@
 package com.mastercard.developer.encryption;
 
+import com.mastercard.developer.encryption.aes.AESEncryption;
 import com.mastercard.developer.test.TestUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -240,4 +242,29 @@ public class JweConfigBuilderTest {
                 .build();
         Assert.assertEquals("2f4lvi26vJWzkzAIaiR2G0YsJAQ=", config.getEncryptionKeyFingerprint());
     }
+    @Test
+    public void testBuild_ShouldBuildWithProvidedSymmetricKey() throws Exception {
+        SecretKeySpec secretKeySpec = AESEncryption.generateCek(256);
+        JweConfig config = JweConfigBuilder.aJweEncryptionConfig()
+                .withEncryptionCertificate(TestUtils.getTestEncryptionCertificate())
+                .withDecryptionKey(TestUtils.getTestDecryptionKey())
+                .withEncryptionPath("$.encryptedPayloads[*]", "$.payload[*]")
+                .withDecryptionPath("$.encryptedPayloads[*]", "$.payload[*]")
+                .withEncryptedValueFieldName("encryptedPayload")
+                .withSymmetricKeySpec(secretKeySpec)
+                .build();
+        Assert.assertEquals(secretKeySpec, config.getSymmetricKeySpec());
+        Assert.assertNotNull(config);
+    }
+    @Test
+    public void testBuild_ShouldBuild_WithNewSymmetricKey_WhenNotProvided() throws Exception {
+        JweConfig config = JweConfigBuilder.aJweEncryptionConfig()
+                .withEncryptionCertificate(TestUtils.getTestEncryptionCertificate())
+                .withDecryptionKey(TestUtils.getTestDecryptionKey())
+                .withEncryptionPath("$.encryptedPayloads[*]", "$.payload[*]")
+                .withDecryptionPath("$.encryptedPayloads[*]", "$.payload[*]")
+                .withEncryptedValueFieldName("encryptedPayload")
+                .build();
+        Assert.assertNotNull(config.getSymmetricKeySpec());
+    }    
 }
